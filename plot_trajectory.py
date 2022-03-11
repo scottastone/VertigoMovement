@@ -21,13 +21,7 @@ def main():
         ax.set_zlabel('Time')
         ax.scatter(data[:,1], data[:,2], data[:,0], label=f'Trajectory: {pkl_file}')
 
-        #plt.plot(data[:,0], data[:,1], 'b')
-        #plt.plot(data[:, 0], data[:, 2], 'r')
         plt.show()
-
-
-
-        pass
 
 
 if __name__ == "__main__":
