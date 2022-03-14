@@ -5,6 +5,7 @@ from cv2 import rotate
 import mediapipe as mp
 import numpy as np
 import pickle as pkl
+from tqdm import tqdm
 
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
@@ -19,27 +20,30 @@ def main():
     # get the list of video files in the videos folder
     video_files = glob.glob("videos/*.mp4")
 
-
     # loop through each video file
     for video_file in video_files:
         # load the video file into memory using OpenCV
         video = cv2.VideoCapture(video_file)
 
+        # check if the video file has been processed already
+        pkl_f = "pkls/" + video_file.split('\\')[-1].split('.')[0] + "pointer.pkl"
+        if os.path.exists(pkl_f):
+            print(f"Skipping {video_file}")
+            continue
+
         # finger_tip_pos
         finger_tip_pos = []
 
-        while True:
+        # get the number of frames in the video
+        num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        for frame_number in tqdm(range(num_frames)):
             # get the next frame
             ret, frame = video.read()
                 
             # check if there is a frame
-            if not ret:
-                # pickle finger_tip_pos and save it
-                fname = video_file.split("\\")[-1][:-4] + "pointer.pkl"
-                pkl.dump(finger_tip_pos, open(fname, "wb"))
-                print(f'Saved file {fname}')
-                break
-
+            if not ret: continue
+                
             # rotate the frame if needed
             if np.shape(frame)[0] > np.shape(frame)[1]:
                 frame = rotate_frame(frame)
@@ -75,7 +79,7 @@ def main():
                     )
                     '''
                     frame_number = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                    print(f"{frame_number}")
+                    #print(f"{frame_number}")
                     finger_tip_pos.append((frame_number,
                                            hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width,
                                            hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_hight))
@@ -98,6 +102,12 @@ def main():
             # check if the user wants to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+        
+        # pickle finger_tip_pos and save it
+        fname = video_file.split("\\")[-1][:-4] + "pointer.pkl"
+        pkl.dump(finger_tip_pos, open(fname, "wb"))
+        print(f'Saved file {fname}')
+        break
 
     pass
 
